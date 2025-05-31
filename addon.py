@@ -1,10 +1,16 @@
-import requests
 import xbmc
 import xbmcaddon
 import xbmcgui
 import os
 import json
 import shutil
+
+try:
+    import smbprotocol
+except ImportError:
+    xbmc.log("smbprotocol missing, attempting to install...", xbmc.LOGWARNING)
+    subprocess.run([sys.executable, "-m", "pip", "install", "smbprotocol", "--target", xbmc.translatePath("special://home/addons/packages")])
+    import smbprotocol  # Retry import after installation
 
 addon = xbmcaddon.Addon()
 smb_username = "kodi" #str(addon.getSetting("smb_username"))
@@ -43,13 +49,8 @@ class WatchStatusSync(xbmc.Monitor):
     def store_to_smb(self, data):
         file_path = smb_path + "/" + "watched_status.json"
 
-        # Read the JSON file
-        response = requests.get(file_path, auth=(smb_username, smb_password))
-        if response.status_code == 200:
-            data = response.json()
-            print("Loaded JSON:", data)
-        else:
-            print("Error loading JSON:", response.status_code)
+    with smbclient.open_file(file_path, mode="w") as f:
+        json.dump(data, f)
 
 
 
@@ -58,12 +59,12 @@ class WatchStatusSync(xbmc.Monitor):
         file_path = smb_path + "/" + "watched_status.json"
 
         # Read the JSON file
-        response = requests.get(file_path, auth=(smb_username, smb_password))
-        if response.status_code == 200:
-            updated_status = response.json()
-            print("Loaded JSON:", updated_status)
-        else:
-            print("Error loading JSON:", response.status_code)
+        # SMB Credentials
+        smbclient.ClientConfig(username="kodi", password="kodi")
+
+        # Open the file from SMB and read its contents
+        with smbclient.open_file(file_path, mode="r") as f:
+            data = json.load(f)
         self.apply_updates(updated_status)
 
     def apply_updates(self, data):
