@@ -1,5 +1,5 @@
 <settings>
-    <setting id="smb_path" type="string" label="SMB Server Path" default="//192.168.1.100/shared_folder" />
+    <setting id="smb_path" type="string" label="SMB Server Path" default="//192.168.50.1/kodi_data" />
     <setting id="smb_username" type="string" label="SMB Username" default="" />
     <setting id="smb_password" type="string" label="SMB Password" default="" />
     <setting id="sync_interval" type="integer" label="Sync Interval (minutes)" default="10" />
