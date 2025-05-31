@@ -1,15 +1,15 @@
+import requests
 import xbmc
 import xbmcaddon
 import xbmcgui
 import os
 import json
 import shutil
-import smbclient
 
 addon = xbmcaddon.Addon()
 smb_username = "kodi" #str(addon.getSetting("smb_username"))
 smb_password = "kodi" #str(addon.getSetting("smb_password"))
-smb_path = "smb://kodi@kodi/192.168.50.1/kodi_data" # str(addon.getSetting("smb_path"))
+smb_path = "smb:/192.168.50.1/kodi_data" # str(addon.getSetting("smb_path"))
 sync_interval = 10 #(addon.getSetting("sync_interval"))
 enable_logging = True #bool(addon.getSetting("enable_logging"))
 
@@ -26,7 +26,6 @@ class WatchStatusSync(xbmc.Monitor):
         super().__init__()
         self.running = True
         threading.Thread(target=self.periodic_sync, daemon=True).start()
-        self.client = smbclient.ClientConfig(username=smb_username, password=smb_password)
 
     def onPlayBackStopped(self):
         self.sync_watched_status()
@@ -43,15 +42,28 @@ class WatchStatusSync(xbmc.Monitor):
 
     def store_to_smb(self, data):
         file_path = smb_path + "/" + "watched_status.json"
-        with self.client.open_file(file_path, mode="w") as f:
-            json.dump(data, f)
+
+        # Read the JSON file
+        response = requests.get(file_path, auth=(smb_username, smb_password))
+        if response.status_code == 200:
+            data = response.json()
+            print("Loaded JSON:", data)
+        else:
+            print("Error loading JSON:", response.status_code)
+
 
 
     def load_updates(self):
         log_message("Loading watched status...")
         file_path = smb_path + "/" + "watched_status.json"
-        with self.client.open_file(file_path, mode="r") as f:
-            updated_status = json.load(f)
+
+        # Read the JSON file
+        response = requests.get(file_path, auth=(smb_username, smb_password))
+        if response.status_code == 200:
+            updated_status = response.json()
+            print("Loaded JSON:", updated_status)
+        else:
+            print("Error loading JSON:", response.status_code)
         self.apply_updates(updated_status)
 
     def apply_updates(self, data):
