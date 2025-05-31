@@ -7,12 +7,16 @@ import shutil
 
 
 addon = xbmcaddon.Addon()
-smb_path = addon.getSetting("smb_path")
-smb_username = addon.getSetting("smb_username")
-smb_password = addon.getSetting("smb_password")
+smb_username = str(addon.getSetting("smb_username"))
+smb_password = str(addon.getSetting("smb_password"))
+smb_path = str(addon.getSetting("smb_path"))
+sync_interval = int(addon.getSetting("sync_interval"))
+enable_logging = bool(addon.getSetting("enable_logging"))
 
-def log_message(message, level=xbmc.LOGNOTICE):
+
+def log_message(message, level=xbmc.LOGINFO):  # Use LOGINFO instead of LOGNOTICE
     xbmc.log(f"[WatchStatusSync] {message}", level)
+
 
 
 
