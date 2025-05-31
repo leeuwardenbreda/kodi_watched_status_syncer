@@ -5,8 +5,13 @@ import os
 import json
 import shutil
 
+
 addon = xbmcaddon.Addon()
 smb_path = addon.getSetting("smb_path")
+smb_username = addon.getSetting("smb_username")
+smb_password = addon.getSetting("smb_password")
+
+
 
 class WatchStatusSync(xbmc.Monitor):
     def __init__(self):
