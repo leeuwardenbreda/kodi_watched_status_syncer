@@ -2,7 +2,7 @@
 <addon id="script.sync_watched_status" name="Sync Watched Status" version="1.0.2" provider-name="zag">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
-        <import addon="smbprotocol" version="*"/>
+        <import addon="smbprotocol" version=">1.0.0"/>
     </requires>
     <extension point="xbmc.python.script" library="addon.py">
         <provides>executable</provides>
