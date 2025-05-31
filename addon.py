@@ -4,25 +4,29 @@ import xbmcgui
 import os
 import json
 import shutil
-
+import smbclient
 
 addon = xbmcaddon.Addon()
-smb_username = str(addon.getSetting("smb_username"))
-smb_password = str(addon.getSetting("smb_password"))
-smb_path = str(addon.getSetting("smb_path"))
-sync_interval = int(addon.getSetting("sync_interval"))
-enable_logging = bool(addon.getSetting("enable_logging"))
+smb_username = "kodi" #str(addon.getSetting("smb_username"))
+smb_password = "kodi" #str(addon.getSetting("smb_password"))
+smb_path = "smb://kodi@kodi/192.168.50.1/kodi_data" # str(addon.getSetting("smb_path"))
+sync_interval = 10 #(addon.getSetting("sync_interval"))
+enable_logging = True #bool(addon.getSetting("enable_logging"))
 
 
 def log_message(message, level=xbmc.LOGINFO):  # Use LOGINFO instead of LOGNOTICE
     xbmc.log(f"[WatchStatusSync] {message}", level)
 
 
-
+import time
+import threading
 
 class WatchStatusSync(xbmc.Monitor):
     def __init__(self):
         super().__init__()
+        self.running = True
+        threading.Thread(target=self.periodic_sync, daemon=True).start()
+        self.client = smbclient.ClientConfig(username=smb_username, password=smb_password)
 
     def onPlayBackStopped(self):
         self.sync_watched_status()
@@ -38,20 +42,31 @@ class WatchStatusSync(xbmc.Monitor):
         return json.loads(response)
 
     def store_to_smb(self, data):
-        file_path = os.path.join(smb_path, "watched_status.json")
-        with open(file_path, "w") as f:
+        file_path = smb_path + "/" + "watched_status.json"
+        with self.client.open_file(file_path, mode="w") as f:
             json.dump(data, f)
+
 
     def load_updates(self):
         log_message("Loading watched status...")
-        file_path = os.path.join(smb_path, "watched_status.json")
-        if os.path.exists(file_path):
-            with open(file_path, "r") as f:
-                updated_status = json.load(f)
-            self.apply_updates(updated_status)
+        file_path = smb_path + "/" + "watched_status.json"
+        with self.client.open_file(file_path, mode="r") as f:
+            updated_status = json.load(f)
+        self.apply_updates(updated_status)
 
     def apply_updates(self, data):
         # Logic to update Kodi's local watched status based on SMB data
         pass
+
+    def periodic_sync(self):
+        while self.running:
+            try:
+                log_message("Performing scheduled watched status sync...")
+                self.sync_watched_status()
+                time.sleep(sync_interval*60)  # Wait for sync_interval minutes before next sync
+            except Exception as e:
+                log_message(f"{e}")
+                log_message("stop running")
+                self.running = False
 
 watch_sync = WatchStatusSync()
